@@ -1,0 +1,48 @@
+with "dds.gpr";
+with "dds-ada.gpr";
+with "dds-c.gpr";
+
+project Chat is
+   Arch_Exec_Dir := external ("ARCH", "x64Linux2.6gcc4.4.5");
+
+   for Languages use ("Ada");
+
+   for Source_Dirs use ("./", "./src");
+   for Main use ("chat-main.adb");
+
+   for Object_Dir use ".obj/" & DDS.Library_Kind & "/" & Dds.Build;
+   for Exec_Dir use "bin/" & Arch_Exec_Dir;
+
+
+   package Binder is
+      for Default_Switches ("ada") use ("-E");
+   end Binder;
+
+   package Compiler is
+      for Driver ("idl") use "";
+         for Default_Switches ("ada") use
+           ("-gnatf",
+            "-gnatQ",
+            "-gnatq",
+            "-gnat12",
+            "-gnatyM20483aAbcefhiklnprstx",
+            "-gnatwa", "-gnato",
+            "-fstack-check");
+         for Default_Switches ("c") use Dds.Compiler'Default_Switches ("c");
+
+      case Dds.Build is
+         when "debug" =>
+            for Default_Switches ("Ada") use Compiler'Default_Switches ("Ada") & ("-O0");
+            for Default_Switches ("C") use Compiler'Default_Switches ("C") & ("-O0");
+         when "release" =>
+            for Default_Switches ("Ada") use Compiler'Default_Switches ("Ada") & ("-O2");
+            for Default_Switches ("C") use Compiler'Default_Switches ("C") & ("-O2");
+      end case;
+   end Compiler;
+
+   package Naming is
+      for Specification_Suffix ("idl") use ".idl";
+   end Naming;
+
+end Chat;
+
