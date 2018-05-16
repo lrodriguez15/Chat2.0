@@ -1,0 +1,75 @@
+###############################################################################
+##         (c) Copyright, Real-Time Innovations, All rights reserved.        ##
+##                                                                           ##
+##         Permission to modify and use for internal purposes granted.       ##
+## This software is provided "as is", without warranty, express or implied.  ##
+##                                                                           ##
+###############################################################################
+
+# This Makefile contains the common rules to build for all the architectures.
+# It is included from the architecture-specific Makefile.
+# This Makefile requires the following variables:
+# - ARCH: Architecture to build (for example x64Linux2.6gcc4.4.5)
+#
+# Optional variables:
+# - DEBUG: If set to '1', it turns on debugging information
+# - SHAREDLIB: If set to '1', shared libraries will be used
+# - CC: compiler name. If not set, it will use 'gcc'
+# - CFLAGS: compiler flags: will be appended to $CC command-line
+# - CLD: linker name. If not set, it will use 'gcc'
+# - CLDFLAGS: linker flags: will be inserted at the beginning of CLD cmdline
+# - SYSLIBS: additional system libraries to append to the CLD command-line
+
+###############################################################################
+# Ensure this Makefile is invoked with the right variable set
+###############################################################################
+ifeq ($(ARCH), )
+all:
+	@echo "***************************************************************"
+	@echo "You cannot use this Makefile directly, instead use the"
+	@echo "architecture-specific Makefile. For example:"
+	@echo "         gmake -f make/Makefile.x64Linux2.6gcc4.4.5"
+	@echo "***************************************************************"
+	@false
+else
+###############################################################################
+# Ensure $NDDSHOME is defined
+###############################################################################
+ifeq ($(NDDSHOME), )
+all:
+	@echo "***************************************************************"
+	@echo "The environment variable 'NDDSHOME' is not set!"
+	@echo "To use this makefile you need to set NDDSHOME to the directory"
+	@echo "where you have RTI Connext installed."
+	@echo "***************************************************************"
+	@false
+endif
+endif
+
+# Generate needed folders
+all:
+	rm -rf .obj
+	rm -rf bin
+	mkdir -p bin
+	mkdir -p .obj
+	mkdir -p .obj/static
+	mkdir -p .obj/static/release
+	mkdir -p .obj/static/debug
+	mkdir -p .obj/relocatable
+	mkdir -p .obj/relocatable/release
+	mkdir -p .obj/relocatable/debug
+
+# Build Ada project
+ifeq ($(DEBUG),1)
+ifeq ($(SHAREDLIB),1)
+	gprbuild -p -P chat.gpr -XRTIDDS_BUILD=debug -XRTIDDS_LIBRARY_TYPE=relocatable -XARCH=${ARCH}
+else
+	gprbuild -p -P chat.gpr -XRTIDDS_BUILD=debug -XRTIDDS_LIBRARY_TYPE=static -XARCH=${ARCH}
+endif
+else
+ifeq ($(SHAREDLIB),1)
+	gprbuild -p -P chat.gpr -XRTIDDS_BUILD=release -XRTIDDS_LIBRARY_TYPE=relocatable -XARCH=${ARCH}
+else
+	gprbuild -p -P chat.gpr -XRTIDDS_BUILD=release -XRTIDDS_LIBRARY_TYPE=static -XARCH=${ARCH}
+endif
+endif
